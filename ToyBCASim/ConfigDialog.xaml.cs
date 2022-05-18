@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 namespace ToyBCASim
 {
@@ -14,6 +15,7 @@ namespace ToyBCASim
     public partial class ConfigDialog : Window
     {
         private static readonly Regex _numberRegex = new("^[0-9]+");
+        private readonly DispatcherTimer _timer = new();
 
         public ConfigDialog()
         {
@@ -21,6 +23,14 @@ namespace ToyBCASim
 
             // 初回表示時にテキスト設定
             ContentRendered += (s, e) => { SetText(); };
+
+            // 初回表示時にタイマー実行関数指定
+            _timer.Interval = TimeSpan.FromMilliseconds(GlobalConfig.Instance.Delay);
+            _timer.Stop();
+            _timer.Tick += (s, e) => {
+                Stage.Instance.Step();
+                Application.Current.MainWindow.InvalidateVisual();
+            };
         }
 
         protected override void OnClosing(CancelEventArgs e)
@@ -69,23 +79,19 @@ namespace ToyBCASim
 
         private void SetText()
         {
-            TextBox? heightTextBox = FindName("heightTextBox") as TextBox;
-            if (heightTextBox != null)
+            if (FindName("heightTextBox") is TextBox heightTextBox)
             {
                 heightTextBox.Text = Stage.Instance.Height.ToString();
             }
-            TextBox? widthTextBox = FindName("widthTextBox") as TextBox;
-            if (widthTextBox != null)
+            if (FindName("widthTextBox") is TextBox widthTextBox)
             {
                 widthTextBox.Text = Stage.Instance.Width.ToString();
             }
-            TextBox? gridSizeTextBox = FindName("gridSizeTextBox") as TextBox;
-            if (gridSizeTextBox != null)
+            if (FindName("gridSizeTextBox") is TextBox gridSizeTextBox)
             {
                 gridSizeTextBox.Text = GlobalConfig.Instance.GridSize.ToString();
             }
-            TextBox? delayTextBox = FindName("delayTextBox") as TextBox;
-            if (delayTextBox != null)
+            if (FindName("delayTextBox") is TextBox delayTextBox)
             {
                 delayTextBox.Text = GlobalConfig.Instance.Delay.ToString();
             }
@@ -127,14 +133,26 @@ namespace ToyBCASim
             int delay = string.IsNullOrEmpty(textBox.Text) ? 100 : Math.Max(int.Parse(textBox.Text), 100);
             textBox.Text = delay.ToString();
             GlobalConfig.Instance.Delay = delay;
+            _timer.Interval = TimeSpan.FromMilliseconds(delay);
         }
 
         private void StartStopButton_Click(object sender, RoutedEventArgs e)
         {
-            // とりあえず1ステップだけやる
-            Stage.Instance.Step();
-
-            Application.Current.MainWindow.InvalidateVisual();
+            if (_timer.IsEnabled)
+            {
+                _timer.Stop();
+                if (FindName("startStopButton") is Button startStopButton)
+                {
+                    startStopButton.Content = "Start";
+                }
+            } else
+            {
+                _timer.Start();
+                if (FindName("startStopButton") is Button startStopButton)
+                {
+                    startStopButton.Content = "Stop";
+                }
+            }
         }
     }
 }

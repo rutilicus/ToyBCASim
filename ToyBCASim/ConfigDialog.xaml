@@ -52,6 +52,6 @@
         <TextBox x:Name="gridSizeTextBox" Grid.Row="3" Grid.Column="1" PreviewTextInput="NumberPreviewTextInput" LostKeyboardFocus="GridSize_TextBox_LostFocus"/>
         <Label Grid.Row="4" Grid.Column="0">Delay</Label>
         <TextBox Name="delayTextBox" Grid.Row="4" Grid.Column="1"  PreviewTextInput="NumberPreviewTextInput" LostKeyboardFocus="Delay_TextBox_LostFocus"/>
-        <Button x:Name="startStopButton" Grid.Row="5" Grid.Column="0" VerticalAlignment="Center" Click="StartStopButton_Click">Start</Button>
+        <Button x:Name="startStopButton" Grid.Row="5" Grid.Column="0" VerticalAlignment="Center" Click="StartStopButton_Click" Content="Start"/>
     </Grid>
 </Window>
