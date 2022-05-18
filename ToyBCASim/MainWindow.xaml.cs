@@ -1,4 +1,6 @@
-﻿using System.Windows;
+﻿using Microsoft.Win32;
+using System.IO;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -11,6 +13,8 @@ namespace ToyBCASim
     /// </summary>
     public partial class MainWindow : Window
     {
+        private const int VERSION_CODE = 0x00CAFE51;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -23,14 +27,96 @@ namespace ToyBCASim
 
         }
 
+        private void SaveFile(string filePath)
+        {
+            using (var stream = File.Open(filePath, FileMode.Create))
+            {
+                using (var writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, false))
+                {
+                    writer.Write(VERSION_CODE);
+
+                    int height = Stage.Instance.Height;
+                    int width = Stage.Instance.Width;
+                    int[,] data = Stage.Instance.Data;
+
+                    writer.Write(Stage.Instance.Height);
+                    writer.Write(Stage.Instance.Width);
+                    for (int y = 0; y < height; y++)
+                    {
+                        for (int x = 0; x < width; x++)
+                        {
+                            writer.Write(data[y, x]);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void ReadFile(string filePath)
+        {
+            if (File.Exists(filePath))
+            {
+                using (var stream = File.Open(filePath, FileMode.Open))
+                {
+                    using (var reader = new BinaryReader(stream))
+                    {
+                        int version = reader.ReadInt32();
+                        if (version == VERSION_CODE)
+                        {
+                            int height = reader.ReadInt32();
+                            int width = reader.ReadInt32();
+
+                            int[,] data = new int[height, width];
+
+                            for (int y = 0; y < height; y++)
+                            {
+                                for (int x = 0; x < width; x++)
+                                {
+                                    data[y, x] = reader.ReadInt32();
+                                }
+                            }
+
+                            Stage.Instance.Resize(height, width);
+                            for (int y = 0; y < height; y++)
+                            {
+                                for (int x = 0; x < width; x++)
+                                {
+                                    Stage.Instance.SetData(y, x, data[y, x]);
+                                }
+                            }
+
+                            InvalidateVisual();
+                        }
+                    }
+                }
+            }
+        }
+
         private void MenuItem_Click_Save(object sender, RoutedEventArgs e)
         {
+            SaveFileDialog dialog = new()
+            {
+                Filter = "BCA(*.bca)|*.bca",
+                RestoreDirectory = true,
+            };
 
+            if (dialog.ShowDialog() == true)
+            {
+                SaveFile(dialog.FileName);
+            }
         }
 
         private void MenuItem_Click_Open(object sender, RoutedEventArgs e)
         {
+            OpenFileDialog dialog = new()
+            {
+                Filter = "BCA(*.bca)|*.bca",
+            };
 
+            if (dialog.ShowDialog() == true)
+            {
+                ReadFile(dialog.FileName);
+            }
         }
 
         private void DrawStage()
@@ -55,8 +141,10 @@ namespace ToyBCASim
                 {
                     for (int j = 0; j < width; j++)
                     {
-                        Rectangle rect = new();
-                        rect.Stroke = Brushes.Gray;
+                        Rectangle rect = new()
+                        {
+                            Stroke = Brushes.Gray
+                        };
                         switch (data[i, j])
                         {
                             case 0:
@@ -83,8 +171,10 @@ namespace ToyBCASim
 
         private void ShowConfigWindow()
         {
-            Window configWindow = new ConfigDialog();
-            configWindow.Owner = this;
+            Window configWindow = new ConfigDialog
+            {
+                Owner = this
+            };
             configWindow.Show();
         }
 
@@ -105,7 +195,7 @@ namespace ToyBCASim
                     (int)(mousePosition.X / gridSize),
                     GlobalConfig.Instance.Palette);
 
-                this.InvalidateVisual();
+                InvalidateVisual();
             }
         }
 
