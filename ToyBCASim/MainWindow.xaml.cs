@@ -14,6 +14,7 @@ namespace ToyBCASim
     public partial class MainWindow : Window
     {
         private const int VERSION_CODE = 0x00CAFE51;
+        private Window? configWindow;
 
         public MainWindow()
         {
@@ -86,6 +87,15 @@ namespace ToyBCASim
                             }
 
                             InvalidateVisual();
+
+                            if (configWindow?.FindName("heightTextBox") is TextBox heightTextBox)
+                            {
+                                heightTextBox.Text = height.ToString();
+                            }
+                            if (configWindow?.FindName("widthTextBox") is TextBox widthTextBox)
+                            {
+                                widthTextBox.Text = width.ToString();
+                            }
                         }
                     }
                 }
@@ -171,7 +181,7 @@ namespace ToyBCASim
 
         private void ShowConfigWindow()
         {
-            Window configWindow = new ConfigDialog
+            configWindow = new ConfigDialog
             {
                 Owner = this
             };
